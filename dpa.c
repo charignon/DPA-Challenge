@@ -11,6 +11,8 @@
 void dump_byte(unsigned char a);
 void dump_trace_node(trace_s *a);
 void show_des_result(unsigned char * message, unsigned char * out, unsigned char * key);
+int hamming_string(int length, unsigned char * s1,unsigned char * s2);
+int hamming_byte(unsigned char byte1, unsigned char byte2);
 
 
 void dump_trace_node(trace_s *a)
@@ -51,6 +53,17 @@ int hamming_byte(unsigned char byte1, unsigned char byte2)
   return count ;
   
 }
+int hamming_string(int length, unsigned char * s1,unsigned char * s2)
+{
+  int count = 0 ;
+  for (int l = 0 ; l < length ; l ++)
+    count += hamming_byte(s1[l],s2[l]);
+  return count;
+  
+  
+
+
+}
 
 
 
@@ -79,10 +92,10 @@ int main(int argc, char **argv)
       }
  
 
-  unsigned char a = '2';
-  unsigned char b=  'f';
+  unsigned char a[] = "fffffffffffffff";
+  unsigned char b[]=  "000000000000000";
   
-  printf("\n %d \n",hamming_byte(a,b));
+  printf("\n %d \n",hamming_string(15,a,b));
   
 
     

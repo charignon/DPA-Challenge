@@ -42,6 +42,18 @@ void show_des_result(unsigned char * message, unsigned char * out, unsigned char
 	dump_byte(out[l]);
 }
 
+int hamming_byte(unsigned char byte1, unsigned char byte2)
+{
+  int count = 0 ;
+  for (int i = 0 ; i < 8 ; i++)
+    if ((byte1&(0x1<<i)) != (byte2&(0x1<<i)))
+      count ++;
+  return count ;
+  
+}
+
+
+
 
 int main(int argc, char **argv)
 {
@@ -66,7 +78,14 @@ int main(int argc, char **argv)
       current = current->next;
       }
  
-      
+
+  unsigned char a = '2';
+  unsigned char b=  'f';
+  
+  printf("\n %d \n",hamming_byte(a,b));
+  
+
+    
   free(out);
   
   printf("done.\n");

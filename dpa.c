@@ -66,11 +66,25 @@ unsigned char e_table[] = { 32, 1, 2, 3, 4, 5,
 
 }
 
+unsigned char get_bit_new(unsigned char * data,
+		      int bit_num) {
+
+  int byte_in_data = bit_num / 8;
+  int bit_in_byte = bit_num - byte_in_data * 8;
+
+  unsigned char mask = (1 << (7 - bit_in_byte));
+
+  unsigned result = (data[byte_in_data] & mask ) >>(7 - bit_in_byte);
+
+  return result;
+}
+
+
 
 void compute_sbox ( int num_sbox , trace_s* t , unsigned int * initial_indexes , unsigned char sub_key , unsigned int * sbox_output)
 {
   
-  unsigned char input=0;
+  unsigned char input=0x00;
    int j ;
    unsigned char bit_to_add ;
    unsigned char found_char;
@@ -81,18 +95,26 @@ void compute_sbox ( int num_sbox , trace_s* t , unsigned int * initial_indexes ,
   
   for (int i = 0 ; i < 6 ; i ++ )
     {
-      j = initial_indexes[i];
-      bit_to_add = 0;
-      char_num = j/8;
-      pos_num = j%8;
-      found_char = t->message[char_num];
-      bit_to_add = (found_char & (0x1 << pos_num) ) >>pos_num;
-      input|= bit_to_add<<i;
-           
+      input|= get_bit_new(t->message,initial_indexes[i])<<i;
+      printf("\nINPUT : ");
+  
+      dump_byte(input);
+  
     }
+  printf("\n*******");
   
-  dump_byte(input^sub_key);
+  dump_byte(get_bit(t->message,39));
+printf("\n*******"); 
+ printf("\nFINAL INPUT : ");
   
+  dump_byte(input);
+  printf("\nSUBKEY : ");
+  
+dump_byte(sub_key);
+ printf("\nResult : ");
+ 
+dump_byte(input^sub_key);
+    
   
 
 }
@@ -208,13 +230,15 @@ void dump_trace_node(trace_s *a)
 }
 
 void dump_byte(unsigned char a)
-{  for (int j = 8 ; j!= 0 ; j --)
+{  for (int j = 7 ; j!=-1 ; j --)
     printf("%d",((a)&(0x1<<j))>>j);
 }
 
 void dump_string(int length, unsigned char * st)
 {  for (int l = 0 ; l < length ; l ++)
-    dump_byte(st[l]);
+    {  dump_byte(st[l]);printf(" ");
+    }
+  
 }
 
 void dump_string_hexa(int length, unsigned char * st)
@@ -305,11 +329,15 @@ int main(int argc, char **argv)
   for (int k = 0 ; k < 6 ; k ++ ) 
     printf("%d\n",init[k]);
   
+  dump_string(8,traces_list->trace->message);
+  printf("\n");
+  
   
 
-  //void compute_sbox ( 1 , trace_node t , int ,0xFF , null)
-
-
+  
+    
+  compute_sbox ( 1,traces_list->trace ,init , (unsigned char) 0x1F ,0);
+  
   //  free(result_s1);
   //free(result_clair);
   free(init);

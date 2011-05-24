@@ -67,6 +67,51 @@ unsigned char e_table[] = { 32, 1, 2, 3, 4, 5,
 }
 
 
+void compute_sbox ( int num_sbox , trace_s* t , unsigned int * initial_indexes , unsigned char sub_key , unsigned int * sbox_output)
+{
+  
+  unsigned char input=0;
+   int j ;
+   unsigned char bit_to_add ;
+   unsigned char found_char;
+   
+   int char_num ;
+   int pos_num ;
+     
+  
+  for (int i = 0 ; i < 6 ; i ++ )
+    {
+      j = initial_indexes[i];
+      bit_to_add = 0;
+      char_num = j/8;
+      pos_num = j%8;
+      found_char = t->message[char_num];
+      bit_to_add = (found_char & (0x1 << pos_num) ) >>pos_num;
+      input|= bit_to_add<<i;
+           
+    }
+  
+  dump_byte(input^sub_key);
+  
+  
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -227,7 +272,7 @@ int main(int argc, char **argv)
    **************************/
   printf("Reading traces from disk... ");
   fflush(stdout);
-  //read_traces_from_dir(argv[1]);
+  read_traces_from_dir(argv[1]);
   
   
   /**********************
@@ -245,26 +290,28 @@ int main(int argc, char **argv)
   /*     current = current->next; */
   /*   } */
     
-  unsigned int * result_s1 = (unsigned int * ) malloc ( sizeof(unsigned int) * 4 );
-  unsigned int * result_clair = (unsigned int * ) malloc ( sizeof(unsigned int) * 4 );
+  /* unsigned int * result_s1 = (unsigned int * ) malloc ( sizeof(unsigned int) * 4 ); */
+  /* unsigned int * result_clair = (unsigned int * ) malloc ( sizeof(unsigned int) * 4 ); */
   
   
-  s_box(1,result_clair, result_s1);
+  /* s_box(1,result_clair, result_s1); */
   
-  for (int k = 0 ; k < 4 ; k ++ ) 
-    printf("%d\n",result_clair[k]);
+  /* for (int k = 0 ; k < 4 ; k ++ )  */
+  /*   printf("%d\n",result_clair[k]); */
   
 
   unsigned int * init = (unsigned int * ) malloc ( sizeof(unsigned int) * 4 );
   init_index(1,init);
-  
   for (int k = 0 ; k < 6 ; k ++ ) 
     printf("%d\n",init[k]);
   
+  
+
+  //void compute_sbox ( 1 , trace_node t , int ,0xFF , null)
 
 
-  free(result_s1);
-  free(result_clair);
+  //  free(result_s1);
+  //free(result_clair);
   free(init);
 
   

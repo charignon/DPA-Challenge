@@ -19,7 +19,18 @@ int hamming_string(int length, unsigned char * s1,unsigned char * s2);
 int hamming_byte(unsigned char byte1, unsigned char byte2);
 int hamming_bit ( int length, unsigned char c1, unsigned char c2);
 
-void  destination_index (int s_box , unsigned int*  destination_indexes ) ;
+
+//Functions to handle datapath through the system
+void destination_index (int s_box , unsigned int*  destination_indexes ) ;
+void source_index (unsigned int*  source_indexes , unsigned int *destination_indexes);
+void s_box (int num_sbox , unsigned int*  source_indexes , unsigned int *destination_indexes);
+
+
+
+
+
+
+
 
 
 unsigned char inv_ip_table[] =
@@ -32,6 +43,40 @@ unsigned char inv_ip_table[] =
     19, 59, 27, 34, 2, 42, 10, 50, 18, 
     58, 26, 33, 1, 41, 9, 49, 17, 57, 25
   };
+
+
+//Get the indexes of the bits sent through a s_box for calculation
+void init_index( int num_sbox , unsigned int * initial_indexes)
+{
+
+unsigned char e_table[] = { 32, 1, 2, 3, 4, 5,
+			    4, 5, 6, 7, 8, 9,
+			    8, 9, 10, 11, 12, 13,
+			    12, 13, 14, 15, 16, 17,
+			    16, 17, 18, 19, 20, 21,
+			    20, 21, 22, 23, 24, 25,
+			    24, 25, 26, 27, 28, 29,
+			    28, 29, 30, 31, 32, 1};
+
+  
+  for (int i = 0 ; i < 6 ; i ++)
+    {
+      initial_indexes[i] = inv_ip_table[e_table[i]-1]-1;
+    }
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
   
 
@@ -88,6 +133,10 @@ void s_box (int num_sbox , unsigned int*  source_indexes , unsigned int *destina
   destination_index(num_sbox, destination_indexes );
   source_index(source_indexes , destination_indexes);
 }
+
+
+
+
 
 
 
@@ -206,9 +255,17 @@ int main(int argc, char **argv)
     printf("%d\n",result_clair[k]);
   
 
+  unsigned int * init = (unsigned int * ) malloc ( sizeof(unsigned int) * 4 );
+  init_index(1,init);
+  
+  for (int k = 0 ; k < 6 ; k ++ ) 
+    printf("%d\n",init[k]);
+  
 
 
-
+  free(result_s1);
+  free(result_clair);
+  free(init);
 
   
 

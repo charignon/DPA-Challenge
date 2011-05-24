@@ -12,6 +12,7 @@
 void dump_byte(unsigned char a);
 void dump_trace_node(trace_s *a);
 void show_des_result(unsigned char * message, unsigned char * out, unsigned char * key);
+void dump_array(char * file_name , int length, float* array);
 
 //Hamming distances functions
 int hamming_string(int length, unsigned char * s1,unsigned char * s2);
@@ -27,6 +28,16 @@ double average_sample(trace_s *a)
     total += a->samples[i];
   total = total / a->num_samples;
   return total;
+}
+
+void dump_array(char * file_name , int length, float* array)
+{
+  FILE * f = fopen(file_name,"w");
+  for (int i =0 ; i < length ; i ++)
+    {
+      fprintf(f,"%f\n",array[i]);
+    }
+  fclose(f);
 }
 
 
@@ -88,8 +99,6 @@ int hamming_bit ( int length, unsigned char c1, unsigned char c2)
     if ((c1&(0x1<<i)) != (c2&(0x1<<i)))
       count ++;
   return count ;
-  
-
 }
 
 
@@ -127,18 +136,10 @@ int main(int argc, char **argv)
       dump_string_hexa(8,current->trace->message);
       printf("\n%f\n",average_sample(current->trace));  
       current = current->next;
-
     }
- 
-
-
-
     
-  free(out);
   
-  printf("done.\n");
 
-  // TODO
-
+  free(out);
   exit (EXIT_SUCCESS);
 }

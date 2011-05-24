@@ -6,18 +6,9 @@
 #include "dpa.h"
 #include "traces.h"
 #include "des.h"
+#include "display.h"
+#include "hamming.h"
 
-
-//Display functions
-void dump_byte(unsigned char a);
-void dump_trace_node(trace_s *a);
-void show_des_result(unsigned char * message, unsigned char * out, unsigned char * key);
-void dump_array(char * file_name , int length, float* array);
-
-//Hamming distances functions
-int hamming_string(int length, unsigned char * s1,unsigned char * s2);
-int hamming_byte(unsigned char byte1, unsigned char byte2);
-int hamming_bit ( int length, unsigned char c1, unsigned char c2);
 
 
 //Functions to handle datapath through the system
@@ -27,13 +18,7 @@ void s_box (int num_sbox , unsigned int*  source_indexes , unsigned int *destina
 
 
 
-
-
-
-
-
-
-unsigned char inv_ip_table[] =
+unsigned char inv_ip_table_2[] =
   {
     40, 8, 48, 16, 56, 24, 64, 32, 39,
     7, 47, 15, 55, 23, 63, 31, 38, 6, 
@@ -43,6 +28,9 @@ unsigned char inv_ip_table[] =
     19, 59, 27, 34, 2, 42, 10, 50, 18, 
     58, 26, 33, 1, 41, 9, 49, 17, 57, 25
   };
+
+
+
 
 
 //Get the indexes of the bits sent through a s_box for calculation
@@ -61,114 +49,43 @@ unsigned char e_table[] = { 32, 1, 2, 3, 4, 5,
   
   for (int i = 0 ; i < 6 ; i ++)
     {
-      initial_indexes[i] = inv_ip_table[e_table[i]-1]-1;
+      initial_indexes[i] = inv_ip_table_2[e_table[i]-1]-1;
     }
 
 }
 
-unsigned char get_bit_new(unsigned char * data,
-		      int bit_num) {
-
-  int byte_in_data = bit_num / 8;
-  int bit_in_byte = bit_num - byte_in_data * 8;
-
-  unsigned char mask = (1 << (7 - bit_in_byte));
-
-  unsigned result = (data[byte_in_data] & mask ) >>(7 - bit_in_byte);
-
-  return result;
-}
 
 
 
-void compute_sbox ( int num_sbox , trace_s* t , unsigned int * initial_indexes , unsigned char sub_key , unsigned int * sbox_output)
+int compute_sbox ( int num_sbox , trace_s* t , unsigned int * initial_indexes , unsigned char sub_key )
 {
   
   unsigned char input=0x00;
-   int j ;
-   unsigned char bit_to_add ;
-   unsigned char found_char;
-   
-   int char_num ;
-   int pos_num ;
-     
+  unsigned char before_sbox = 0x00;
+  unsigned char after_sbox;
   
+   
+     
+   unsigned char s1_table[] = { 14,  4, 13,  1,  2, 15, 11,  8,  3, 10,  6, 12,  5,  9,  0,  7,
+				0, 15,  7,  4, 14,  2, 13,  1, 10,  6, 12, 11,  9,  5,  3,  8,
+				4,  1, 14,  8, 13,  6,  2, 11, 15, 12,  9,  7,  3, 10,  5,  0,
+				15, 12,  8,  2,  4,  9,  1,  7,  5, 11,  3, 14, 10,  0,  6, 13};
+  
+
   for (int i = 0 ; i < 6 ; i ++ )
     {
       input|= get_bit_new(t->message,initial_indexes[i])<<i;
-      printf("\nINPUT : ");
-  
-      dump_byte(input);
-  
     }
-  printf("\n*******");
   
-  dump_byte(get_bit(t->message,39));
-printf("\n*******"); 
- printf("\nFINAL INPUT : ");
-  
-  dump_byte(input);
-  printf("\nSUBKEY : ");
-  
-dump_byte(sub_key);
- printf("\nResult : ");
- 
-dump_byte(input^sub_key);
-    
-  
+  before_sbox = input^sub_key;
+  after_sbox = s1_table[before_sbox];
 
+  return after_sbox;
+  
 }
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
-
-
-
-
-
-double average_sample(trace_s *a)
-{
-  double total = 0;
-  for (int i = 0 ; i < a->num_samples ; i ++)
-    total += a->samples[i];
-  total = total / a->num_samples;
-  return total;
-}
-
-void dump_array(char * file_name , int length, float* array)
-{
-  FILE * f = fopen(file_name,"w");
-  for (int i =0 ; i < length ; i ++)
-    {
-      fprintf(f,"%f\n",array[i]);
-    }
-  fclose(f);
-}
 
 
 
@@ -190,7 +107,7 @@ unsigned char p_table[] = {16,  7, 20, 21, 29, 12, 28, 17,
 void source_index (unsigned int*  source_indexes , unsigned int *destination_indexes)
 {
   for (int i = 0 ; i < 4 ; i ++ ) 
-    source_indexes[i] = inv_ip_table[destination_indexes[i]] - 1 ;
+    source_indexes[i] = inv_ip_table_2[destination_indexes[i]] - 1 ;
    
 }
 
@@ -199,82 +116,6 @@ void s_box (int num_sbox , unsigned int*  source_indexes , unsigned int *destina
 {
   destination_index(num_sbox, destination_indexes );
   source_index(source_indexes , destination_indexes);
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-void dump_trace_node(trace_s *a)
-{
-  for (int k =0;k<8;k++)
-    {
-      printf("PLAIN TEXT : \n");
-      dump_byte(a->message[k]);
-      printf("\nCIPHERED :\n");
-      dump_byte(a->ciphertext[k]);
-      printf("\nKEY :\n");
-      dump_byte(a->key[k]);
-    }
-}
-
-void dump_byte(unsigned char a)
-{  for (int j = 7 ; j!=-1 ; j --)
-    printf("%d",((a)&(0x1<<j))>>j);
-}
-
-void dump_string(int length, unsigned char * st)
-{  for (int l = 0 ; l < length ; l ++)
-    {  dump_byte(st[l]);printf(" ");
-    }
-  
-}
-
-void dump_string_hexa(int length, unsigned char * st)
-{    for (int l = 0 ; l < length ; l ++)
-      printf("%02x",st[l]);
-}
-
-
-void show_des_result(unsigned char * message, unsigned char * out, unsigned char * key)
-{  des_encrypt(message,out ,key);
-  printf("\n RESULT :\n ");
-  for (int l=0;l<8;l++)
-    dump_byte(out[l]);}
-
-int hamming_byte(unsigned char byte1, unsigned char byte2)
-{
-  return hamming_bit(8,byte1,byte2);
-}
-
-int hamming_string(int length, unsigned char * s1,unsigned char * s2)
-{
-  int count = 0 ;
-  for (int l = 0 ; l < length ; l ++)
-    count += hamming_byte(s1[l],s2[l]);
-  return count;
- 
-}
-
-int hamming_bit ( int length, unsigned char c1, unsigned char c2)
-{
-  //Compute the Hamming distance between the length first bits of the given bytes c1 and c2
-  int count = 0 ;
-  for (int i = 0 ; i < length ; i++)
-    if ((c1&(0x1<<i)) != (c2&(0x1<<i)))
-      count ++;
-  return count ;
 }
 
 
@@ -314,33 +155,33 @@ int main(int argc, char **argv)
   /*     current = current->next; */
   /*   } */
     
-  /* unsigned int * result_s1 = (unsigned int * ) malloc ( sizeof(unsigned int) * 4 ); */
-  /* unsigned int * result_clair = (unsigned int * ) malloc ( sizeof(unsigned int) * 4 ); */
+   unsigned int * result_s1 = (unsigned int * ) malloc ( sizeof(unsigned int) * 4 ); 
+   unsigned int * result_clair = (unsigned int * ) malloc ( sizeof(unsigned int) * 4 );  
+   unsigned int * init = (unsigned int * ) malloc ( sizeof(unsigned int) * 4 );
+   int after_sbox ;
+   int dist ;
+   
+   
+   
+   s_box(1,result_clair, result_s1); 
+   init_index(1,init);
+   
+   trace_node * current;
+   current = traces_list;
+   
+   for (int i = 0 ; i < atoi(argv[2]);i++)
+     {
+       
+       after_sbox = compute_sbox ( 1,current->trace ,init , (unsigned char) 0x1F );
+       dist = hamming_dpa(current->trace , after_sbox , result_clair);
+       current = current->next;
+       
+     }
+   
   
-  
-  /* s_box(1,result_clair, result_s1); */
-  
-  /* for (int k = 0 ; k < 4 ; k ++ )  */
-  /*   printf("%d\n",result_clair[k]); */
-  
-
-  unsigned int * init = (unsigned int * ) malloc ( sizeof(unsigned int) * 4 );
-  init_index(1,init);
-  for (int k = 0 ; k < 6 ; k ++ ) 
-    printf("%d\n",init[k]);
-  
-  dump_string(8,traces_list->trace->message);
-  printf("\n");
-  
-  
-
-  
-    
-  compute_sbox ( 1,traces_list->trace ,init , (unsigned char) 0x1F ,0);
-  
-  //  free(result_s1);
-  //free(result_clair);
-  free(init);
+   free(result_s1);
+   free(result_clair);
+   free(init);
 
   
 

@@ -19,6 +19,24 @@ int hamming_string(int length, unsigned char * s1,unsigned char * s2);
 int hamming_byte(unsigned char byte1, unsigned char byte2);
 int hamming_bit ( int length, unsigned char c1, unsigned char c2);
 
+void  destination_index (int s_box , unsigned int*  destination_indexes ) ;
+
+
+unsigned char inv_ip_table[] =
+  {
+    40, 8, 48, 16, 56, 24, 64, 32, 39,
+    7, 47, 15, 55, 23, 63, 31, 38, 6, 
+    46, 14, 54, 22, 62, 30, 37, 5, 45, 
+    13, 53, 21, 61, 29, 36, 4, 44, 12, 
+    52, 20, 60, 28, 35, 3, 43, 11, 51, 
+    19, 59, 27, 34, 2, 42, 10, 50, 18, 
+    58, 26, 33, 1, 41, 9, 49, 17, 57, 25
+  };
+
+  
+
+
+
 
 
 double average_sample(trace_s *a)
@@ -39,6 +57,46 @@ void dump_array(char * file_name , int length, float* array)
     }
   fclose(f);
 }
+
+
+
+void  destination_index (int s_box , unsigned int*  destination_indexes ) 
+{
+
+unsigned char p_table[] = {16,  7, 20, 21, 29, 12, 28, 17,
+			    1, 15, 23, 26,  5, 18, 31, 10,
+			    2,  8, 24, 14, 32, 27,  3,  9,
+			   19, 13, 30,  6, 22, 11,  4, 25};
+
+  for (int i = 0 ; i < 4 ; i ++ )
+    {
+      destination_indexes[i] = p_table[4*(s_box-1) + i ] -1 ;
+    }
+}
+
+//To be used with the result of the previously mentionned function : destination_index
+void source_index (unsigned int*  source_indexes , unsigned int *destination_indexes)
+{
+  for (int i = 0 ; i < 4 ; i ++ ) 
+    source_indexes[i] = inv_ip_table[destination_indexes[i]] - 1 ;
+   
+}
+
+
+void s_box (int num_sbox , unsigned int*  source_indexes , unsigned int *destination_indexes)
+{
+  destination_index(num_sbox, destination_indexes );
+  source_index(source_indexes , destination_indexes);
+}
+
+
+
+
+
+
+
+
+
 
 
 
@@ -120,26 +178,40 @@ int main(int argc, char **argv)
    **************************/
   printf("Reading traces from disk... ");
   fflush(stdout);
-  read_traces_from_dir(argv[1]);
- 
-
+  //read_traces_from_dir(argv[1]);
+  
+  
   /**********************
    *     PROCESSING     *
    **********************/
-  trace_node* current;
-  current = traces_list;
-  unsigned char * out = (unsigned char*) malloc(sizeof(unsigned char)*48);
-  for (int i = 0 ; i <atoi(argv[2]) ; i ++)
-    {
-      printf("\nTRACE NODE NUMBER %d :",i);
-      printf("\n  message : ");
-      dump_string_hexa(8,current->trace->message);
-      printf("\n%f\n",average_sample(current->trace));  
-      current = current->next;
-    }
+  /* trace_node* current; */
+  /* current = traces_list; */
+  /* unsigned char * out = (unsigned char*) malloc(sizeof(unsigned char)*48); */
+  /* for (int i = 0 ; i <atoi(argv[2]) ; i ++) */
+  /*   { */
+  /*     printf("\nTRACE NODE NUMBER %d :",i); */
+  /*     printf("\n  message : "); */
+  /*     dump_string_hexa(8,current->trace->message); */
+  /*     printf("\n%f\n",average_sample(current->trace));   */
+  /*     current = current->next; */
+  /*   } */
     
+  unsigned int * result_s1 = (unsigned int * ) malloc ( sizeof(unsigned int) * 4 );
+  unsigned int * result_clair = (unsigned int * ) malloc ( sizeof(unsigned int) * 4 );
+  
+  
+  s_box(1,result_clair, result_s1);
+  
+  for (int k = 0 ; k < 4 ; k ++ ) 
+    printf("%d\n",result_clair[k]);
   
 
-  free(out);
+
+
+
+
+  
+
+  //  free(out);
   exit (EXIT_SUCCESS);
 }
